@@ -44,9 +44,8 @@ function Instagram(props: React.SVGProps<SVGSVGElement>) {
   )
 }
 
-import { Button } from "@/components/ui/button"
-import { LeverSwitch } from "@/components/ui/lever-switch"
-import { BellNotify } from "@/components/ui/bell-notify"
+import { LiquidCarveButton } from "@/components/originkit/liquid-carve-button"
+import { ArrowRevealButton } from "@/components/originkit/arrow-reveal-button"
 import { ScrambleText } from "@/components/originkit/scramble-text"
 import { CardContainer, CardBody, CardItem } from "@/components/ui/3d-card"
 import { Spotlight } from "@/components/ui/spotlight"
@@ -55,8 +54,82 @@ import { ProjectPreviewToggle } from "@/components/ui/project-preview-toggle"
 import { PointerHighlight } from "@/components/ui/pointer-highlight"
 import { FloatingDock } from "@/components/ui/floating-dock"
 import { DraggableCardBody, DraggableCardContainer } from "@/components/ui/draggable-card"
+import { HeartFavorite } from "@/components/ui/heart-favorite"
+import { CrowdCanvas } from "@/components/ui/skiper-ui/skiper39"
+import styled from "styled-components"
 import { cn } from "@/lib/utils"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
+
+const SocialContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+
+  @media (min-width: 1024px) {
+    justify-content: flex-end;
+  }
+`
+
+const SocialLink = styled.a<{ $brand?: string }>`
+  display: flex;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  transition: all 0.2s ease;
+  text-decoration: none;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.2);
+    outline-offset: 2px;
+  }
+
+  /* Brand colors */
+  &[data-brand="linkedin"] {
+    color: #0a66c2;
+    &:hover {
+      color: #004182;
+      background: rgba(10, 102, 194, 0.12);
+      border-color: rgba(10, 102, 194, 0.2);
+    }
+  }
+
+  &[data-brand="instagram"] {
+    color: #e1306c;
+    &:hover {
+      color: #c13584;
+      background: linear-gradient(45deg, rgba(254, 218, 117, 0.12), rgba(250, 126, 30, 0.12), rgba(214, 41, 118, 0.12), rgba(150, 47, 191, 0.12));
+      border-color: rgba(225, 48, 108, 0.2);
+    }
+  }
+
+  &[data-brand="github"] {
+    color: #ffffff;
+    &:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.12);
+    }
+  }
+
+  &[data-brand="email"] {
+    color: rgba(255, 255, 255, 0.8);
+    &:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.12);
+    }
+  }
+`
 
 const Hero3D = dynamic(() => import("@/components/hero-3d").then((m) => m.Hero3D), {
   ssr: false,
@@ -200,81 +273,79 @@ const draggableAboutCards = [
       "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=2069&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
   },
 ]
-
-const cardFanConfig = [
-  { x: -70, y: 35, rotate: -5, scale: 0.94, zIndex: 1, mobileX: -42, mobileY: 20, mobileRotate: -4 },
-  { x: -35, y: 0, rotate: -2.5, scale: 0.97, zIndex: 2, mobileX: -21, mobileY: 0, mobileRotate: -2 },
-  { x: 0, y: -30, rotate: 0, scale: 1.0, zIndex: 5, mobileX: 0, mobileY: -18, mobileRotate: 0 },
-  { x: 35, y: 0, rotate: 2.5, scale: 0.97, zIndex: 3, mobileX: 21, mobileY: 0, mobileRotate: 2 },
-  { x: 70, y: 35, rotate: 5, scale: 0.94, zIndex: 4, mobileX: 42, mobileY: 20, mobileRotate: 4 },
-]
-
 function AboutCardDeck() {
-  const [hoveredId, setHoveredId] = React.useState<number | null>(null)
-  const [isMobile, setIsMobile] = React.useState(false)
+  const [activeCard, setActiveCard] = React.useState<number | null>(2)
+  const shouldReduceMotion = typeof window !== "undefined" ? window.matchMedia("(prefers-reduced-motion: reduce)").matches : false
 
-  React.useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 640)
-    checkMobile()
-    window.addEventListener("resize", checkMobile)
-    return () => window.removeEventListener("resize", checkMobile)
-  }, [])
+  const cards = draggableAboutCards.slice(0, 5)
 
   return (
-    <div
-      onMouseLeave={() => setHoveredId(null)}
-      className="relative flex h-[460px] w-full max-w-[360px] items-center justify-center overflow-visible sm:h-[500px] sm:max-w-[480px] lg:max-w-[540px]"
-    >
-      {draggableAboutCards.map((card, idx) => {
-        const config = cardFanConfig[idx] || cardFanConfig[0]
-        const isHovered = hoveredId === card.id
-
-        const restingX = isMobile ? config.mobileX : config.x
-        const restingY = isMobile ? config.mobileY : config.y
-        const restingRotate = isMobile ? config.mobileRotate : config.rotate
-        const restingScale = config.scale
-
-        return (
-          <motion.div
-            key={card.id}
-            initial={false}
-            animate={{
-              x: isHovered ? 0 : restingX,
-              y: isHovered ? (isMobile ? -14 : -22) : restingY,
-              rotate: isHovered ? 0 : restingRotate,
-              scale: isHovered ? (isMobile ? 1.04 : 1.06) : restingScale,
-            }}
-            transition={{
-              type: "spring",
-              stiffness: 320,
-              damping: 25,
-              mass: 0.6,
-            }}
-            onMouseEnter={() => setHoveredId(card.id)}
-            onClick={() => setHoveredId((prev) => (prev === card.id ? null : card.id))}
-            style={{
-              zIndex: isHovered ? 50 : config.zIndex,
-              transformOrigin: "center center",
-            }}
-            className="absolute w-[260px] sm:w-[310px] md:w-[330px] rounded-2xl border border-white/10 bg-[#0d0d14]/95 p-4 sm:p-5 shadow-[0_20px_45px_-10px_rgba(0,0,0,0.7)] backdrop-blur-xl cursor-pointer select-none transition-[border-color,background-color,box-shadow] hover:border-white/25 hover:bg-[#12121c] hover:shadow-[0_25px_60px_-10px_rgba(0,0,0,0.85),0_0_0_1px_rgba(255,255,255,0.12)]"
-          >
-            <img
-              src={card.thumbnail}
-              alt={card.title}
-              className="pointer-events-none h-32 sm:h-36 w-full rounded-xl object-cover"
-            />
-            <h3 className="mt-3.5 text-sm sm:text-[15px] font-semibold tracking-tight text-white">
-              {card.title}
-            </h3>
-            <p className="mt-1.5 text-xs sm:text-[12.5px] leading-relaxed text-white/60">
-              {card.definition}
-            </p>
-            <p className="mt-3 pt-2 text-[11px] font-medium tracking-wide text-white/40 border-t border-white/5">
-              {card.tech}
-            </p>
-          </motion.div>
-        )
-      })}
+    <div className="relative w-full max-w-[560px] mx-auto lg:mx-0">
+      <div className="flex w-full items-stretch justify-center gap-1 sm:gap-2 overflow-hidden">
+        {cards.map((card, idx) => {
+          const isActive = activeCard === idx
+          return (
+            <motion.div
+              key={card.id}
+              className="relative cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-[#0d0d14]/95 backdrop-blur-xl flex flex-col shrink-0"
+              initial={false}
+              animate={{
+                width: isActive ? "22rem" : "5rem",
+                flexGrow: isActive ? 2 : 1,
+              }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              onClick={() => setActiveCard(idx)}
+              onHoverStart={() => {
+                if (!shouldReduceMotion) setActiveCard(idx)
+              }}
+              onHoverEnd={() => {}}
+              style={{
+                height: "320px",
+                minWidth: isActive ? "220px" : "60px",
+              } as React.CSSProperties}
+            >
+              <div className="absolute inset-0">
+                <img
+                  src={card.thumbnail}
+                  alt={card.title}
+                  className="h-full w-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+              </div>
+              <div className="relative z-10 flex h-full flex-col p-3 sm:p-4">
+                <h3 className="text-sm font-semibold tracking-tight text-white leading-tight">
+                  {card.title}
+                </h3>
+                <AnimatePresence>
+                  {isActive && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      transition={{ duration: 0.25, ease: "easeInOut" }}
+                      className="mt-2 flex flex-1 flex-col"
+                    >
+                      <p className="text-xs leading-5 text-white/70 line-clamp-3">
+                        {card.definition}
+                      </p>
+                      <p className="mt-auto pt-3 text-[10px] font-medium tracking-wide text-white/50 border-t border-white/10">
+                        {card.tech}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                {!isActive && (
+                  <div className="mt-auto hidden sm:block">
+                    <p className="text-[10px] font-medium tracking-wide text-white/40 [writing-mode:vertical-lr] rotate-180">
+                      {card.title}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -301,7 +372,7 @@ function useReveal<T extends HTMLElement>() {
     io.observe(el)
     return () => io.disconnect()
   }, [])
-  return { ref, visible } as const
+  return { ref, visible } as const;
 }
 
 function ArchitectureReveal() {
@@ -783,6 +854,9 @@ function Project3DCard({ project }: { project: Project }) {
       <CardBody
         className={`group/card relative flex h-full min-h-[480px] w-full flex-col rounded-xl border bg-black p-6 dark:border-white/[0.12] dark:bg-[#0a0a0f] border-black/[0.08] sm:p-7 ${isFlagship ? "dark:border-emerald-500/20" : ""}`}
       >
+        <div className="absolute right-4 top-4 z-[60] pointer-events-auto" style={{ transform: "translateZ(100px)" } as React.CSSProperties}>
+          <HeartFavorite ariaLabel={`Like ${project.title}`} />
+        </div>
         {/* Number + category */}
         <CardItem translateZ="20" className="flex items-center gap-2">
           <span className="text-[11px] font-bold tracking-widest text-white/40">{project.number}</span>
@@ -863,7 +937,6 @@ function Project3DCard({ project }: { project: Project }) {
 
 export default function HomePage() {
   const [active, setActive] = React.useState(0)
-  const [leverOn, setLeverOn] = React.useState(false)
   const [isDark, setIsDark] = React.useState(true)
 
   React.useEffect(() => {
@@ -901,9 +974,6 @@ export default function HomePage() {
         <div className="pointer-events-auto">
           <FloatingDock items={floatingDockItems} />
         </div>
-        <div className="pointer-events-auto">
-          <BellNotify checked={isDark} onCheckedChange={setIsDark} />
-        </div>
       </header>
 
       {/* Hero */}
@@ -937,28 +1007,22 @@ export default function HomePage() {
 
             <div className="mt-2 flex flex-col gap-3">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-                <div className="flex flex-col items-start gap-3">
-                  <Button
-                    variant="default"
-                    size="lg"
-                    onClick={() => {
-                      document.querySelector("#projects")?.scrollIntoView({ behavior: "smooth" })
-                      setLeverOn(true)
-                    }}
-                    className="w-full sm:w-auto"
-                  >
-                    View My Work
-                  </Button>
-                  <LeverSwitch checked={leverOn} onCheckedChange={setLeverOn} aria-label="Lever switch" />
-                </div>
-                <Button
-                  variant="neutral"
-                  size="lg"
+                <button
+                  onClick={() => {
+                    document.querySelector("#projects")?.scrollIntoView({ behavior: "smooth" })
+                  }}
+                  className="inline-flex h-11 items-center justify-center rounded-lg border border-white/10 bg-white px-7 text-sm font-semibold text-black shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-colors duration-200 hover:bg-[#f97316] hover:text-white hover:border-[#f97316] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 w-full sm:w-auto"
+                  aria-label="View My Work"
+                >
+                  View My Work
+                </button>
+                <button
                   onClick={() => document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" })}
-                  className="w-full sm:w-auto"
+                  className="inline-flex h-11 items-center justify-center rounded-lg border border-white/10 bg-white px-7 text-sm font-semibold text-black shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-colors duration-200 hover:bg-[#f97316] hover:text-white hover:border-[#f97316] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 w-full sm:w-auto"
+                  aria-label="Let's Connect"
                 >
                   Let&apos;s Connect
-                </Button>
+                </button>
               </div>
             </div>
 
@@ -1197,22 +1261,31 @@ export default function HomePage() {
         aria-label="About"
         className="relative mx-auto w-full max-w-[1280px] px-6 py-16 sm:px-8 sm:py-20"
       >
-        <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
-          <div className="mx-auto max-w-[520px] text-center sm:mx-0 sm:text-left">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:items-start lg:gap-12">
+          <div className="mx-auto max-w-[580px] text-center sm:mx-0 sm:text-left">
             <p className="text-xs font-medium tracking-[0.22em] text-white/40 uppercase">ABOUT</p>
-            <h2 className="mt-3 text-[30px] font-semibold tracking-[-0.03em] text-white sm:text-[36px]">
-              More than just code.
+            <h2
+              className="mt-4 mb-6 font-normal leading-[0.9] text-white sm:mb-8"
+              style={{
+                fontFamily: "'Italianno', cursive",
+                fontWeight: 400,
+                fontSize: "clamp(64px, 7vw, 110px)",
+              }}
+            >
+              More than just
+              <br className="hidden sm:block" />
+              <span className="sm:hidden"> </span>code.
             </h2>
-            <p className="mt-4 text-[15px] leading-7 text-white/60">
-              I enjoy building complete products — from polished frontend to reliable backend. I
-              like owning the whole flow: interfaces that feel alive, APIs that are predictable, and
-              data models that stay coherent as the product grows.
+            <p className="mt-6 max-w-[560px] text-[16px] sm:text-[17px] leading-[1.75] text-white/60">
+              I enjoy building complete products — from polished frontend to reliable backend. I like
+              owning the whole flow: interfaces that feel alive, APIs that are predictable, and data
+              models that stay coherent as the product grows.
             </p>
-            <p className="mt-3 hidden text-[15px] leading-7 text-white/45 lg:block">
+            <p className="mt-4 max-w-[560px] text-[16px] sm:text-[17px] leading-[1.75] text-white/45">
               My focus is clean, maintainable engineering over clever one-offs. Ship, learn, iterate.
             </p>
           </div>
-          <div className="relative flex w-full justify-center lg:justify-end">
+          <div className="relative flex w-full justify-center lg:justify-end lg:pt-2 lg:mt-[84px]">
             <AboutCardDeck />
           </div>
         </div>
@@ -1221,95 +1294,76 @@ export default function HomePage() {
       {/* hidden skills anchor to preserve navbar scroll target */}
       <div id="skills" aria-hidden className="sr-only" />
 
-      {/* Contact */}
+      {/* Let's build something — transparent with Skiper39 background */}
       <section
         id="contact"
         aria-label="Contact"
-        className="relative mx-auto w-full max-w-[1280px] px-6 py-16 sm:px-8 sm:py-24"
+        className="relative w-full overflow-hidden bg-transparent"
       >
-        <div className="overflow-hidden rounded-[28px] border border-white/[0.08] bg-white/[0.04] p-[1px] backdrop-blur-xl">
-          <div className="rounded-[26px] bg-gradient-to-b from-white/[0.06] via-[#0a0a0f]/80 to-[#060608] p-8 sm:p-10 lg:p-12">
-            <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-              <div>
-                <p className="text-xs font-medium tracking-[0.22em] text-white/40">CONTACT</p>
-                <h2 className="mt-3 text-[30px] font-semibold tracking-[-0.03em] text-white sm:text-[40px]">
-                  Let&apos;s build something.
-                </h2>
-                <p className="mt-3 max-w-[520px] text-sm leading-6 text-white/60">
-                  Have an idea, a product to ship, or a system to improve? I&apos;m open to
-                  product-focused work and thoughtful collaborations.
-                </p>
+        {/* Skiper39 atmospheric background — subtle, behind this section only */}
+        <div className="pointer-events-none absolute inset-0 z-0 opacity-[0.28]" aria-hidden>
+          <CrowdCanvas src="/images/peeps/all-peeps.png" rows={15} cols={7} />
+        </div>
 
-                <div className="mt-8 grid gap-3 sm:grid-cols-3">
-                  {[
-                    {
-                      label: "Email",
-                      value: "asrsingh95040@gmail.com",
-                      href: "mailto:asrsingh95040@gmail.com",
-                      icon: Mail,
-                    },
-                    {
-                      label: "GitHub",
-                      value: "github.com/Ankit95040",
-                      href: "https://github.com/Ankit95040",
-                      icon: Github,
-                    },
-                    {
-                      label: "LinkedIn",
-                      value: "linkedin.com/in/ankit-raj-128763327",
-                      href: "https://www.linkedin.com/in/ankit-raj-128763327/",
-                      icon: Linkedin,
-                    },
-                  ].map(({ label, value, href, icon: Icon }) => (
-                    <a
-                      key={label}
-                      href={href}
-                      target={label === "Email" ? undefined : "_blank"}
-                      rel={label === "Email" ? undefined : "noopener noreferrer"}
-                      className="group flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur transition hover:border-white/15 hover:bg-white/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/15"
-                    >
-                      <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.06]">
-                        <Icon className="size-4 text-white/80" />
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block text-xs font-medium tracking-wide text-white/50">{label}</span>
-                        <span className="block truncate text-sm font-medium text-white group-hover:text-white">{value}</span>
-                      </span>
-                    </a>
-                  ))}
-                </div>
-              </div>
+        <div className="relative z-10 mx-auto flex min-h-[520px] w-full max-w-[1280px] items-center px-6 py-16 sm:px-8 sm:py-20 lg:py-24">
+          <div className="flex w-full flex-col gap-10 lg:flex-row lg:items-center lg:justify-between lg:gap-16">
+            <div className="max-w-[560px] text-center lg:text-left mx-auto lg:mx-0">
+              <h2
+                className="font-normal leading-[0.9] tracking-tight text-white"
+                style={{ fontFamily: "'Italianno', cursive", fontWeight: 400, fontSize: "clamp(48px, 6vw, 80px)" }}
+              >
+                Let&apos;s build something.
+              </h2>
+              <p className="mt-6 text-[15px] leading-7 text-white/60">
+                I&apos;m always interested in building thoughtful products, solving difficult engineering problems, and working on ideas that are worth shipping.
+              </p>
+              <p className="mt-3 text-[15px] leading-7 text-white/45">
+                Have an idea, a project, or an opportunity? Let&apos;s talk.
+              </p>
+            </div>
 
-              <div className="flex flex-col items-start gap-4 lg:items-end">
-                <div className="w-full lg:w-auto">
-                  <a
-                    href="mailto:asrsingh95040@gmail.com"
-                    className="inline-flex h-[52px] w-full items-center justify-center gap-2 rounded-full bg-white px-8 text-[15px] font-semibold text-black shadow-[0_12px_32px_-12px_rgba(255,255,255,0.35)] transition hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 lg:w-auto"
-                  >
-                    Get In Touch
-                    <Send className="size-4" />
-                  </a>
-                  <p className="mt-3 text-center text-xs text-white/40 lg:text-right">
-                    Replies within 24h • Remote, India
-                  </p>
-                </div>
+            <div className="flex w-full max-w-[420px] flex-col items-center gap-6 mx-auto lg:mx-0 lg:items-end lg:max-w-[360px] shrink-0 lg:-translate-x-16 lg:translate-y-10">
+              <SocialContainer>
+                <SocialLink
+                  href="https://www.linkedin.com/in/ankit-raj-128763327/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="LinkedIn"
+                  data-brand="linkedin"
+                >
+                  <Linkedin className="size-4" />
+                </SocialLink>
+                <SocialLink
+                  href="https://www.instagram.com/r95ankit/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Instagram"
+                  data-brand="instagram"
+                >
+                  <Instagram className="size-4" />
+                </SocialLink>
+                <SocialLink
+                  href="https://github.com/Ankit95040"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="GitHub"
+                  data-brand="github"
+                >
+                  <Github className="size-4" />
+                </SocialLink>
+                <SocialLink href="mailto:asrsingh95040@gmail.com" aria-label="Email Ankit Raj" data-brand="email">
+                  <Mail className="size-4" />
+                </SocialLink>
+              </SocialContainer>
 
-                <div className="hidden w-full max-w-[360px] rounded-2xl border border-white/10 bg-white/[0.03] p-4 backdrop-blur lg:block" aria-hidden>
-                  <div className="flex items-center gap-3">
-                    <div className="size-10 rounded-full bg-gradient-to-br from-[#60a5fa] to-[#818cf8]" />
-                    <div>
-                      <div className="text-sm font-medium text-white">Ankit Raj</div>
-                      <div className="text-xs text-white/50">Full-stack developer</div>
-                    </div>
-                    <span className="ml-auto size-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]" />
-                  </div>
-                  <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs text-white/40">
-                    <span className="rounded-full bg-white/[0.04] py-1">Fast</span>
-                    <span className="rounded-full bg-white/[0.04] py-1">Reliable</span>
-                    <span className="rounded-full bg-white/[0.04] py-1">Clean</span>
-                  </div>
-                </div>
-              </div>
+              <ArrowRevealButton
+                href="mailto:asrsingh95040@gmail.com"
+                aria-label="Let's Connect - Email Ankit Raj"
+                className="w-full sm:w-auto"
+              >
+                Let&apos;s Connect
+              </ArrowRevealButton>
+              <p className="text-xs text-white/30 text-center lg:text-right">Replies within 24h • Remote, India</p>
             </div>
           </div>
         </div>

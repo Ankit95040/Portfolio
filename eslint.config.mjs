@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    "src/shaders/**",
+    "public/landing-pages/**",
+    "src/components/ui/skiper-ui/**",
   ]),
 ]);
 
