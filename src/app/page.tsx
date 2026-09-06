@@ -57,6 +57,7 @@ import { DraggableCardBody, DraggableCardContainer } from "@/components/ui/dragg
 import { HeartFavorite } from "@/components/ui/heart-favorite"
 import { CrowdCanvas } from "@/components/ui/skiper-ui/skiper39"
 import styled from "styled-components"
+import SocialHoverStack from "@/components/ui/social-hover-stack"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 
@@ -1024,6 +1025,10 @@ export default function HomePage() {
                   Let&apos;s Connect
                 </button>
               </div>
+            </div>
+
+            <div className="mt-3">
+              <SocialHoverStack />
             </div>
 
             <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-white/35">
