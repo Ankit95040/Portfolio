@@ -58,6 +58,11 @@ import { HeartFavorite } from "@/components/ui/heart-favorite"
 import { CrowdCanvas } from "@/components/ui/skiper-ui/skiper39"
 import styled from "styled-components"
 import SocialHoverStack from "@/components/ui/social-hover-stack"
+import ProjectsEditorial from "@/components/projects-editorial"
+import AboutTransition from "@/components/about-transition"
+import MustBeThinkingTransition from "@/components/must-thinking-transition"
+import gsap from "gsap"
+import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 
@@ -966,6 +971,66 @@ export default function HomePage() {
     })
     return () => observer.disconnect()
   }, [])
+  // final LET'S BUILD SOMETHING — distributed editorial canvas, scroll-controlled collage assembly
+  const finalOuterRef = React.useRef<HTMLDivElement>(null)
+  const finalPinRef = React.useRef<HTMLDivElement>(null)
+  React.useEffect(() => {
+    if (typeof window === "undefined") return
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
+    if (!finalOuterRef.current || !finalPinRef.current) return
+    gsap.registerPlugin(ScrollTrigger)
+    const ctx = gsap.context(() => {
+      const q = gsap.utils.selector(finalPinRef)
+      gsap.set(q("[data-animate]"), { autoAlpha: 0 })
+      gsap.set(q("[data-from='top']"), { y: -60 })
+      gsap.set(q("[data-from='bottom']"), { y: 60 })
+      gsap.set(q("[data-from='left']"), { x: -60 })
+      gsap.set(q("[data-from='right']"), { x: 60 })
+      gsap.set(q("[data-rotate]"), { rotation: -3 })
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: finalOuterRef.current,
+          start: "top top",
+          end: "bottom bottom",
+          pin: finalPinRef.current,
+          pinSpacing: true,
+          scrub: 0.9,
+        },
+      })
+      // EMPTY CANVAS at 0% — only background visible
+      // 10–20% small editorial labels
+      tl.to(q("[data-animate='label']"), { autoAlpha: 1, y: 0, x: 0, rotation: 0, duration: 0.10 }, 0.10)
+      // 20–35% IDEAS TO IMPACT
+      tl.to(q("[data-animate='ideas']"), { autoAlpha: 1, y: 0, x: 0, rotation: 0, duration: 0.15 }, 0.20)
+      // 35–50% LET'S
+      tl.to(q("[data-animate='word-lets']"), { autoAlpha: 1, y: 0, x: 0, rotation: 0, duration: 0.15 }, 0.35)
+      // 50–62% BUILD
+      tl.to(q("[data-animate='word-build']"), { autoAlpha: 1, y: 0, x: 0, rotation: 0, duration: 0.12 }, 0.50)
+      // 62–72% SOMETHING.
+      tl.to(q("[data-animate='word-something']"), { autoAlpha: 1, y: 0, x: 0, rotation: 0, duration: 0.10 }, 0.62)
+      // 72–80% mountain
+      tl.to(q("[data-animate='mountain']"), { autoAlpha: 1, y: 0, x: 0, rotation: 0, duration: 0.08 }, 0.72)
+      // 80–86% workspace/laptop
+      tl.to(q("[data-animate='workspace']"), { autoAlpha: 1, y: 0, x: 0, rotation: 0, duration: 0.06 }, 0.80)
+      // 86–91% code panel
+      tl.to(q("[data-animate='code']"), { autoAlpha: 1, y: 0, x: 0, rotation: 0, duration: 0.05 }, 0.86)
+      // 91–95% sticky notes, globe, doodles
+      tl.to(q("[data-animate='note']"), { autoAlpha: 1, y: 0, x: 0, rotation: 0, duration: 0.04, stagger: 0.01 }, 0.91)
+      tl.to(q("[data-animate='globe']"), { autoAlpha: 1, y: 0, x: 0, scale: 1, rotation: 0, duration: 0.04 }, 0.91)
+      tl.to(q("[data-animate='deco']"), { autoAlpha: 1, y: 0, x: 0, rotation: 0, duration: 0.04, stagger: 0.01 }, 0.91)
+      // 95–100% supporting text + social icons
+      tl.to(q("[data-animate='text']"), { autoAlpha: 1, y: 0, x: 0, duration: 0.05, stagger: 0.01 }, 0.95)
+      tl.to(q("[data-animate='social']"), { autoAlpha: 1, y: 0, x: 0, rotation: 0, scale: 1, duration: 0.05, stagger: 0.01 }, 0.95)
+      tl.to(q("[data-animate='footer']"), { autoAlpha: 1, y: 0, duration: 0.05 }, 0.95)
+    }, finalOuterRef)
+    return () => {
+      ctx.revert()
+      ScrollTrigger.getAll().forEach((t) => {
+        if (t.trigger === finalOuterRef.current) t.kill()
+      })
+    }
+  }, [])
+
   // keep active used for scroll spy (FloatingDock handles own hover state)
   void active
 
@@ -1070,353 +1135,163 @@ export default function HomePage() {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" aria-hidden />
       </section>
 
-      {/* Projects — clean premium showcase */}
+      {/* Must be thinking — editorial transition before Projects */}
+      <MustBeThinkingTransition />
+
+      {/* Projects — editorial 3-project system (unified layout, varied themes) */}
+      <ProjectsEditorial />
+
+      {/* Black transition + About editorial slide */}
+      <AboutTransition />
+
+      {/* Final LET'S BUILD SOMETHING — editorial collage */}
       <section
-        id="projects"
-        aria-label="Projects"
-        className="relative w-full px-6 py-16 sm:px-8 sm:py-20"
-      >
-        <div className="relative mx-auto w-full max-w-[1280px]">
-          <div className="mx-auto max-w-[720px] text-center sm:max-w-none sm:text-left">
-            <p className="text-[12px] sm:text-[13px] font-medium tracking-[0.28em] text-white/40 uppercase">
-              SELECTED WORK
-            </p>
-            <h2
-              className="mt-2 mb-3 text-[56px] sm:text-[76px] lg:text-[96px] font-normal leading-[0.88] tracking-normal text-white"
-              style={{ fontFamily: "'Italianno', cursive", fontWeight: 400 }}
-            >
-              Things I&apos;ve built.
-            </h2>
-            <p className="mx-auto mt-4 max-w-[650px] text-[16px] sm:text-[17px] lg:text-[18px] leading-[1.7] text-white/60 sm:mx-0">
-              A selection of production-focused projects I&apos;ve built across AI platforms, business software, and interactive web applications.
-            </p>
-          </div>
-
-          {/* Zig-zag — alternating text ↔ card */}
-          <div className="mt-20 space-y-28 sm:space-y-36 lg:space-y-44">
-            {/* Project 01 — TEXT LEFT, CARD RIGHT */}
-            <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-14 xl:gap-20">
-              <div className="order-1 flex flex-col gap-5 max-w-[600px] w-full">
-                <span className="text-xs font-mono font-medium tracking-[0.25em] text-white/35 sm:text-sm">01</span>
-                <h3
-                  className="text-white font-normal leading-[0.98] sm:leading-[1.0] tracking-[-0.01em] text-[clamp(44px,5.5vw,78px)]"
-                  style={{ fontFamily: "'Amarante', serif", fontWeight: 400 }}
-                >
-                  Prompt-to-App Platform
-                </h3>
-                <div className="space-y-4 text-[16px] sm:text-[17px] lg:text-[18px] leading-[1.75] text-white/65">
-                  <p>
-                    An AI-powered full-stack platform that turns natural-language prompts into complete web applications. Instead of simply generating code, the platform takes a prompt through an end-to-end workflow: it creates an isolated execution environment, generates and runs application code, and returns a working result that the user can interact with.
-                  </p>
-                  <p>
-                    The system uses <span className="font-medium text-white/95 underline decoration-white/30 decoration-1 underline-offset-[3px]">E2B</span> sandboxes and <span className="font-medium text-white/95 underline decoration-white/30 decoration-1 underline-offset-[3px]">Docker</span>-based isolation for secure execution, while <span className="font-medium text-white/95 underline decoration-white/30 decoration-1 underline-offset-[3px]">Inngest</span> coordinates asynchronous workflows. The application also includes <span className="font-medium text-white/95 underline decoration-white/30 decoration-1 underline-offset-[3px]">authentication</span>, <span className="font-medium text-white/95 underline decoration-white/30 decoration-1 underline-offset-[3px]">credit-based access control</span>, <span className="font-medium text-white/95 underline decoration-white/30 decoration-1 underline-offset-[3px]">billing</span>, persistent database state, and a production-oriented architecture built around <span className="font-medium text-white/95 underline decoration-white/30 decoration-1 underline-offset-[3px]">Next.js</span>, <span className="font-medium text-white/95 underline decoration-white/30 decoration-1 underline-offset-[3px]">tRPC</span>, <span className="font-medium text-white/95 underline decoration-white/30 decoration-1 underline-offset-[3px]">PostgreSQL</span>, and <span className="font-medium text-white/95 underline decoration-white/30 decoration-1 underline-offset-[3px]">Prisma</span>.
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {["Next.js", "TypeScript", "tRPC", "PostgreSQL", "Prisma", "Clerk", "Inngest", "E2B", "Docker"].map((t) => (
-                    <span key={t} className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs font-medium text-white/65 backdrop-blur">
-                      {t}
-                    </span>
-                  ))}
-                </div>
-                <div className="hidden lg:block pt-3">
-                  <a
-                    href="https://next-gen-git-v1-ankit-rajs-projects-82de644e.vercel.app"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-sm font-semibold tracking-wider text-white hover:text-white/80 transition group"
-                  >
-                    VIEW PROJECT <span className="transition-transform duration-200 group-hover:translate-x-1.5" aria-hidden>→</span>
-                  </a>
-                </div>
-              </div>
-              <div className="order-2 flex w-full flex-col items-center justify-center lg:justify-end">
-                <div className="w-full max-w-[560px]">
-                  <Project3DCard project={projects[0]} />
-                </div>
-                <div className="mt-6 flex w-full justify-start lg:hidden">
-                  <a
-                    href="https://next-gen-git-v1-ankit-rajs-projects-82de644e.vercel.app"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-sm font-semibold tracking-wider text-white hover:text-white/80 transition group"
-                  >
-                    VIEW PROJECT <span className="transition-transform duration-200 group-hover:translate-x-1.5" aria-hidden>→</span>
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            {/* Project 02 — CARD LEFT, TEXT RIGHT (reversed on desktop) */}
-            <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-14 xl:gap-20">
-              <div className="order-1 lg:order-2 flex flex-col gap-5 max-w-[600px] w-full">
-                <span className="text-xs font-mono font-medium tracking-[0.25em] text-white/35 sm:text-sm">02</span>
-                <h3
-                  className="text-white font-normal leading-[0.98] sm:leading-[1.0] tracking-[-0.01em] text-[clamp(44px,5.5vw,78px)]"
-                  style={{ fontFamily: "'Amarante', serif", fontWeight: 400 }}
-                >
-                  ShopM
-                </h3>
-                <div className="space-y-4 text-[16px] sm:text-[17px] lg:text-[18px] leading-[1.75] text-white/65">
-                  <p>
-                    ShopM is a full-stack shop management platform designed around the two workflows a physical shop relies on most: Billing and Inventory. It provides a structured way to manage customers, track bills, attach bill images, and keep operational data organized across a shop.
-                  </p>
-                  <p>
-                    The application supports <span className="font-medium text-white/95 underline decoration-white/30 decoration-1 underline-offset-[3px]">multi-owner authentication</span>, <span className="font-medium text-white/95 underline decoration-white/30 decoration-1 underline-offset-[3px]">shop-scoped data</span> isolation, and role-aware owner/member management. The backend uses <span className="font-medium text-white/95 underline decoration-white/30 decoration-1 underline-offset-[3px]">PostgreSQL</span> and <span className="font-medium text-white/95 underline decoration-white/30 decoration-1 underline-offset-[3px]">Prisma</span> while the frontend is built with <span className="font-medium text-white/95 underline decoration-white/30 decoration-1 underline-offset-[3px]">Next.js</span>, <span className="font-medium text-white/95 underline decoration-white/30 decoration-1 underline-offset-[3px]">React</span>, and <span className="font-medium text-white/95 underline decoration-white/30 decoration-1 underline-offset-[3px]">TypeScript</span>, giving the application a strong separation between user experience, business logic, and persistent data.
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {["Next.js", "TypeScript", "React", "PostgreSQL", "Prisma", "Authentication"].map((t) => (
-                    <span key={t} className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs font-medium text-white/65 backdrop-blur">
-                      {t}
-                    </span>
-                  ))}
-                </div>
-                <div className="hidden lg:block pt-3">
-                  <a
-                    href="https://shop-m-pi.vercel.app/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-sm font-semibold tracking-wider text-white hover:text-white/80 transition group"
-                  >
-                    VIEW PROJECT <span className="transition-transform duration-200 group-hover:translate-x-1.5" aria-hidden>→</span>
-                  </a>
-                </div>
-              </div>
-              <div className="order-2 lg:order-1 flex w-full flex-col items-center justify-center lg:justify-start">
-                <div className="w-full max-w-[560px]">
-                  <Project3DCard project={projects[1]} />
-                </div>
-                <div className="mt-6 flex w-full justify-start lg:hidden">
-                  <a
-                    href="https://shop-m-pi.vercel.app/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-sm font-semibold tracking-wider text-white hover:text-white/80 transition group"
-                  >
-                    VIEW PROJECT <span className="transition-transform duration-200 group-hover:translate-x-1.5" aria-hidden>→</span>
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            {/* Project 03 — TEXT LEFT, CARD RIGHT */}
-            <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-14 xl:gap-20">
-              <div className="order-1 flex flex-col gap-5 max-w-[600px] w-full">
-                <span className="text-xs font-mono font-medium tracking-[0.25em] text-white/35 sm:text-sm">03</span>
-                <h3
-                  className="text-white font-normal leading-[0.98] sm:leading-[1.0] tracking-[-0.01em] text-[clamp(44px,5.5vw,78px)]"
-                  style={{ fontFamily: "'Amarante', serif", fontWeight: 400 }}
-                >
-                  AI Interactive Chat Bot
-                </h3>
-                <div className="space-y-4 text-[16px] sm:text-[17px] lg:text-[18px] leading-[1.75] text-white/65">
-                  <p>
-                    AI Interactive Chat Bot is a conversational AI web application built with <span className="font-medium text-white/95 underline decoration-white/30 decoration-1 underline-offset-[3px]">React</span> and <span className="font-medium text-white/95 underline decoration-white/30 decoration-1 underline-offset-[3px]">Vite</span> around the <span className="font-medium text-white/95 underline decoration-white/30 decoration-1 underline-offset-[3px]">Gemini API</span>. I built the interface and application state from the ground up to create a responsive chat experience with message history, loading states, and a clean conversational workflow.
-                  </p>
-                  <p>
-                    The project also demonstrates practical API integration, environment-based configuration, frontend <span className="font-medium text-white/95 underline decoration-white/30 decoration-1 underline-offset-[3px]">state management</span>, and deployment of a production-ready React application through <span className="font-medium text-white/95 underline decoration-white/30 decoration-1 underline-offset-[3px]">Vercel</span>.
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {["React", "Vite", "Gemini API", "JavaScript", "Vercel"].map((t) => (
-                    <span key={t} className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs font-medium text-white/65 backdrop-blur">
-                      {t}
-                    </span>
-                  ))}
-                </div>
-                <div className="hidden lg:block pt-3">
-                  <a
-                    href="https://gemini-clone-theta-six.vercel.app/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-sm font-semibold tracking-wider text-white hover:text-white/80 transition group"
-                  >
-                    VIEW PROJECT <span className="transition-transform duration-200 group-hover:translate-x-1.5" aria-hidden>→</span>
-                  </a>
-                </div>
-              </div>
-              <div className="order-2 flex w-full flex-col items-center justify-center lg:justify-end">
-                <div className="w-full max-w-[560px]">
-                  <Project3DCard project={projects[2]} />
-                </div>
-                <div className="mt-6 flex w-full justify-start lg:hidden">
-                  <a
-                    href="https://gemini-clone-theta-six.vercel.app/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-sm font-semibold tracking-wider text-white hover:text-white/80 transition group"
-                  >
-                    VIEW PROJECT <span className="transition-transform duration-200 group-hover:translate-x-1.5" aria-hidden>→</span>
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <p className="mt-16 text-center text-xs text-white/30 sm:text-left">
-            Only verified builds — no stock templates, no invented metrics.
-          </p>
-        </div>
-      </section>
-
-      {/* About — Card Deck */}
-      <section
-        id="about"
-        aria-label="About"
-        className="relative mx-auto w-full max-w-[1280px] px-6 py-16 sm:px-8 sm:py-20"
-      >
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:items-start lg:gap-12">
-          <div className="mx-auto max-w-[580px] text-center sm:mx-0 sm:text-left">
-            <p className="text-xs font-medium tracking-[0.22em] text-white/40 uppercase">ABOUT</p>
-            <h2
-              className="mt-4 mb-6 font-normal leading-[0.9] text-white sm:mb-8"
-              style={{
-                fontFamily: "'Italianno', cursive",
-                fontWeight: 400,
-                fontSize: "clamp(64px, 7vw, 110px)",
-              }}
-            >
-              More than just
-              <br className="hidden sm:block" />
-              <span className="sm:hidden"> </span>code.
-            </h2>
-            <p className="mt-6 max-w-[560px] text-[16px] sm:text-[17px] leading-[1.75] text-white/60">
-              I enjoy building complete products — from polished frontend to reliable backend. I like
-              owning the whole flow: interfaces that feel alive, APIs that are predictable, and data
-              models that stay coherent as the product grows.
-            </p>
-            <p className="mt-4 max-w-[560px] text-[16px] sm:text-[17px] leading-[1.75] text-white/45">
-              My focus is clean, maintainable engineering over clever one-offs. Ship, learn, iterate.
-            </p>
-          </div>
-          <div className="relative flex w-full justify-center lg:justify-end lg:pt-2 lg:mt-[84px]">
-            <AboutCardDeck />
-          </div>
-        </div>
-      </section>
-
-      {/* hidden skills anchor to preserve navbar scroll target */}
-      <div id="skills" aria-hidden className="sr-only" />
-
-      {/* Let's build something — transparent with Skiper39 background */}
-      <section
+        ref={finalOuterRef}
         id="contact"
         aria-label="Contact"
-        className="relative w-full overflow-hidden bg-transparent"
+        className="relative w-full bg-[#F2F0EB] selection:bg-black selection:text-white"
+        style={{ height: "300vh" }}
       >
-        {/* Skiper39 atmospheric background — subtle, behind this section only */}
-        <div className="pointer-events-none absolute inset-0 z-0 opacity-[0.28]" aria-hidden>
-          <CrowdCanvas src="/images/peeps/all-peeps.png" rows={15} cols={7} />
-        </div>
+        <div ref={finalPinRef} className="relative h-screen w-screen">
+          <div className="pointer-events-none absolute inset-0 opacity-[0.025]" aria-hidden="true" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
 
-        <div className="relative z-10 mx-auto flex min-h-[520px] w-full max-w-[1280px] items-center px-6 py-16 sm:px-8 sm:py-20 lg:py-24">
-          <div className="flex w-full flex-col gap-10 lg:flex-row lg:items-center lg:justify-between lg:gap-16">
-            <div className="max-w-[560px] text-center lg:text-left mx-auto lg:mx-0">
+          <div className="relative flex h-full w-full flex-col px-4 py-3 sm:px-6 sm:py-4 lg:px-8 lg:py-5">
+            <div data-animate="label" data-from="top" className="flex shrink-0 items-center gap-3 text-[9px] font-medium tracking-[0.18em] text-black/40">
+              <span>IDEAS</span>
+              <span className="text-black/20">TO</span>
+              <span>IMPACT</span>
+            </div>
+
+          <div className="relative mt-2 grid flex-1 gap-4 lg:grid-cols-[1.02fr_1.38fr] lg:gap-6">
+            <div className="relative z-10 flex flex-col">
               <h2
-                className="font-normal leading-[0.9] tracking-tight text-white"
-                style={{ fontFamily: "'Italianno', cursive", fontWeight: 400, fontSize: "clamp(48px, 6vw, 80px)" }}
+                className="font-black uppercase leading-[0.88] tracking-[-0.02em] text-black"
+                style={{ fontFamily: "'Anton', Impact, sans-serif" }}
               >
-                Let&apos;s build something.
+                <span data-animate="word-lets" data-from="top" data-rotate className="block text-[38px] sm:text-[48px] lg:text-[52px] xl:text-[60px]">
+                  LET&apos;S
+                </span>
+                <span data-animate="word-build" data-from="top" data-rotate className="block text-[38px] sm:text-[48px] lg:text-[52px] xl:text-[60px]">
+                  BUILD
+                </span>
+                <span data-animate="word-something" data-from="top" data-rotate className="block text-[38px] sm:text-[48px] lg:text-[52px] xl:text-[60px]">
+                  <span className="inline-block -rotate-[1deg] bg-[#D6FF2A] px-2 py-1 text-black">SOMETHING.</span>
+                </span>
               </h2>
-              <p className="mt-6 text-[15px] leading-7 text-white/60">
+
+              <p data-animate="text" data-from="bottom" className="mt-10 max-w-[420px] font-mono text-[10px] leading-[1.65] text-black/65 sm:text-[11px]">
                 I&apos;m always interested in building thoughtful products, solving difficult engineering problems, and working on ideas that are worth shipping.
               </p>
-              <p className="mt-3 text-[15px] leading-7 text-white/45">
+              <p data-animate="text" data-from="bottom" className="mt-6 max-w-[420px] font-mono text-[10px] leading-[1.6] text-black/45 sm:text-[11px]">
                 Have an idea, a project, or an opportunity? Let&apos;s talk.
               </p>
+
+              <div data-animate="social" data-from="bottom" className="mt-8 flex gap-2.5">
+                <a href="https://github.com/Ankit95040" target="_blank" rel="noopener noreferrer" aria-label="GitHub" className="flex size-9 items-center justify-center rounded-lg bg-black text-white shadow">
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="size-5" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-3 18.5c.5.09.68-.22.68-.48v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.55-1.11-4.55-4.95 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.26.1-2.64 0 0 .84-.27 2.75 1.02A9.4 9.4 0 0 1 12 7.07a9.4 9.4 0 0 1 2.5.34c1.9-1.29 2.74-1.02 2.74-1.02.55 1.38.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.85-2.34 4.7-4.57 4.95.36.31.68.92.68 1.86v2.76c0 .26.18.58.69.48A9.5 9.5 0 0 0 12 2.5Z"/></svg>
+                </a>
+                <a href="https://www.linkedin.com/in/ankit-raj-128763327/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="flex size-9 items-center justify-center rounded-lg bg-[#0A66C2] text-white shadow">
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="size-5" aria-hidden="true"><path d="M19.7 3H4.3A1.3 1.3 0 0 0 3 4.3v15.4A1.3 1.3 0 0 0 4.3 21h15.4a1.3 1.3 0 0 0 1.3-1.3V4.3A1.3 1.3 0 0 0 19.7 3ZM8.34 18.34H5.66V9.8h2.68v8.54ZM6.99 8.55a1.55 1.55 0 1 1 0-3.1 1.55 1.55 0 0 1 0 3.1Zm10.68 9.79h-2.67v-4.14c0-.99-.35-1.66-1.23-1.66-.67 0-1.07.45-1.24.89-.06.15-.08.36-.08.57v4.34H9.78s.03-7.04 0-7.77h2.67v1.1c.36-.54 1-1.32 2.43-1.32 1.77 0 3.1 1.16 3.1 3.65v4.34Z"/></svg>
+                </a>
+                <a href="https://www.instagram.com/r95ankit/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="flex size-9 items-center justify-center rounded-lg text-white shadow" style={{ background: "linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf)" }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="size-5" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37Z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                </a>
+                <a href="mailto:asrsingh95040@gmail.com" aria-label="Email" className="flex size-9 items-center justify-center rounded-lg bg-[#EA4335] text-white shadow">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.7" className="size-5" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                </a>
+              </div>
+
+              <div data-animate="text" data-from="bottom" className="mt-3 flex items-center gap-2">
+                <span className="font-mono text-[10px] font-bold italic leading-tight tracking-[0.06em] text-black/30" style={{ transform: "rotate(-1deg)" }}>
+                  GOOD<br/>IDEAS<br/>BETTER<br/>CONVERSATIONS
+                </span>
+                <span className="text-black/20">↗</span>
+              </div>
+
+              <div data-animate="ideas" data-from="right" data-rotate className="absolute left-[42%] top-[18%] hidden rotate-[-2deg] bg-[#E8DCC8] px-3 py-2 shadow sm:block" style={{ clipPath: "polygon(1% 2%, 100% 0, 98% 100%, 0 98%)" }}>
+                <p className="font-mono text-[10px] font-black leading-tight tracking-[0.08em] text-black">IDEAS<br/>&gt; CODE<br/>&gt; IMPACT</p>
+              </div>
             </div>
 
-            <div className="flex w-full max-w-[420px] flex-col items-center gap-6 mx-auto lg:mx-0 lg:items-end lg:max-w-[360px] shrink-0 lg:-translate-x-16 lg:translate-y-10">
-              <SocialContainer>
-                <SocialLink
-                  href="https://www.linkedin.com/in/ankit-raj-128763327/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="LinkedIn"
-                  data-brand="linkedin"
-                >
-                  <Linkedin className="size-4" />
-                </SocialLink>
-                <SocialLink
-                  href="https://www.instagram.com/r95ankit/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Instagram"
-                  data-brand="instagram"
-                >
-                  <Instagram className="size-4" />
-                </SocialLink>
-                <SocialLink
-                  href="https://github.com/Ankit95040"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="GitHub"
-                  data-brand="github"
-                >
-                  <Github className="size-4" />
-                </SocialLink>
-                <SocialLink href="mailto:asrsingh95040@gmail.com" aria-label="Email Ankit Raj" data-brand="email">
-                  <Mail className="size-4" />
-                </SocialLink>
-              </SocialContainer>
+            <div className="relative min-h-[380px] lg:min-h-0">
+              <div data-animate="mountain" data-from="top" data-rotate className="absolute left-[2%] top-[2%] z-0 h-[42%] w-[80%] overflow-hidden rounded-sm bg-[#0A1F14] shadow-lg" style={{ clipPath: "polygon(0 6%, 100% 0, 100% 92%, 0 100%)" }}>
+                <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=800&auto=format&fit=crop" alt="" className="h-full w-full object-cover opacity-90 grayscale" />
+                <div className="absolute right-[10%] top-[14%] h-8 w-8 rounded-full bg-[#D6FF2A] opacity-90" aria-hidden="true" />
+                <div className="absolute right-[4%] top-[8%] max-w-[130px] -rotate-2 bg-black px-2 py-1.5 shadow">
+                  <p className="text-right font-mono text-[8px] font-bold leading-tight tracking-[0.06em] text-white">A Developer<br/>Who Cares About<br/>Real-World<br/>Problems.</p>
+                </div>
+              </div>
 
-              <ArrowRevealButton
-                href="mailto:asrsingh95040@gmail.com"
-                aria-label="Let's Connect - Email Ankit Raj"
-                className="w-full sm:w-auto"
-              >
-                Let&apos;s Connect
-              </ArrowRevealButton>
-              <p className="text-xs text-white/30 text-center lg:text-right">Replies within 24h • Remote, India</p>
+              <div data-animate="workspace" data-from="bottom" className="absolute bottom-[18%] left-[2%] right-[6%] z-10">
+                <div className="relative overflow-hidden rounded-sm bg-[#0F0F0F] shadow-[0_12px_32px_rgba(0,0,0,0.6)]" style={{ clipPath: "polygon(0 2%, 100% 0, 100% 98%, 0 100%)" }}>
+                  <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=900&auto=format&fit=crop" alt="" className="h-[200px] w-full object-cover opacity-100 sm:h-[240px] lg:h-[280px]" />
+                  <div data-animate="code" data-from="left" className="absolute bottom-[20%] left-[42%] right-[6%] top-[16%] overflow-hidden rounded-lg border border-white/10 bg-[#0A0A0A] shadow-xl">
+                    <div className="h-full bg-[#0A0A0A] p-1">
+                      <div className="grid h-full grid-cols-[1.1fr_1.6fr] gap-1">
+                        <div className="space-y-1">
+                          <div className="h-2 w-full rounded-sm bg-white/10" />
+                          <div className="space-y-1 pt-1">
+                            <div className="h-1 w-full rounded bg-white/5" />
+                            <div className="h-1 w-5/6 rounded bg-white/5" />
+                          </div>
+                        </div>
+                        <div className="rounded bg-[#111] p-1 font-mono text-[5px] leading-tight text-white/70">
+                          <div className="text-[#7B7CFF]">const</div>
+                          <div>build = () =&gt; {"{"}</div>
+                          <div className="text-white/40">&nbsp;&nbsp;return &lt;Idea /&gt;</div>
+                          <div>{"}"}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="absolute bottom-1 right-2 hidden items-center gap-1 font-mono text-[6px] tracking-[0.08em] text-white/60 sm:flex">
+                      BUILD LEARN ITERATE REPEAT <span className="flex size-3 items-center justify-center rounded-full bg-[#D6FF2A] text-[7px] text-black">☺</span>
+                    </div>
+                  </div>
+                </div>
+                <div data-animate="note" data-from="right" data-rotate className="absolute -bottom-6 right-[32%] hidden rotate-[2deg] bg-[#FEF08A] px-2 py-1.5 shadow sm:block">
+                  <p className="font-mono text-[8px] font-black leading-tight text-black">GOOD IDEAS<br/>TAKE TIME.</p>
+                </div>
+              </div>
+
+              <div data-animate="globe" data-from="right" className="absolute right-[2%] top-[28%] z-20 hidden h-[140px] w-[140px] sm:block lg:h-[160px] lg:w-[160px]">
+                <div className="absolute inset-0 rounded-full border border-[#D6FF2A]/40" aria-hidden="true" />
+                <div className="absolute inset-[-8%] rounded-full border border-dashed border-black/10" aria-hidden="true" style={{ transform: "rotate(-12deg)" }} />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-[10px]">🌐</span>
+                </div>
+              </div>
+
+              <div data-animate="note" data-from="right" data-rotate className="absolute bottom-[10%] right-[2%] z-10 hidden rotate-[3deg] bg-[#E8DCC8] px-2 py-1.5 shadow sm:block">
+                <p className="font-mono text-[9px] font-black leading-tight tracking-[0.06em] text-black">TECH<br/>PEOPLE<br/>IMPACT</p>
+              </div>
             </div>
           </div>
+
+          <div data-animate="footer" data-from="bottom" className="mt-3 flex shrink-0 items-center justify-between gap-4 border-t border-black/10 pt-3">
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] font-black tracking-[0.18em] text-black">LET&apos;S CONNECT</span>
+              <span className="hidden h-px w-8 bg-black/15 sm:block" aria-hidden="true" />
+              <span className="hidden text-[10px] tracking-[0.12em] text-black/40 sm:block">Build something together</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <a href="https://github.com/Ankit95040" target="_blank" rel="noopener noreferrer" aria-label="GitHub" className="flex size-8 items-center justify-center rounded-full border border-black/10 bg-white text-black">
+                <svg viewBox="0 0 24 24" fill="currentColor" className="size-4"><path d="M12 2.5a9.5 9.5 0 0 0-3 18.5c.5.09.68-.22.68-.48v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.08.63-1.33-2.22-.25-4.55-1.11-4.55-4.95 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.26.1-2.64 0 0 .84-.27 2.75 1.02A9.4 9.4 0 0 1 12 7.07a9.4 9.4 0 0 1 2.5.34c1.9-1.29 2.74-1.02 2.74-1.02.55 1.38.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.85-2.34 4.7-4.57 4.95.36.31.68.92.68 1.86v2.76c0 .26.18.58.69.48A9.5 9.5 0 0 0 12 2.5Z"/></svg>
+              </a>
+              <a href="https://www.linkedin.com/in/ankit-raj-128763327/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="flex size-8 items-center justify-center rounded-full bg-[#0A66C2] text-white">
+                <svg viewBox="0 0 24 24" fill="currentColor" className="size-4"><path d="M19.7 3H4.3A1.3 1.3 0 0 0 3 4.3v15.4A1.3 1.3 0 0 0 4.3 21h15.4a1.3 1.3 0 0 0 1.3-1.3V4.3A1.3 1.3 0 0 0 19.7 3ZM8.34 18.34H5.66V9.8h2.68v8.54ZM6.99 8.55a1.55 1.55 0 1 1 0-3.1 1.55 1.55 0 0 1 0 3.1Zm10.68 9.79h-2.67v-4.14c0-.99-.35-1.66-1.23-1.66-.67 0-1.07.45-1.24.89-.06.15-.08.36-.08.57v4.34H9.78s.03-7.04 0-7.77h2.67v1.1c.36-.54 1-1.32 2.43-1.32 1.77 0 3.1 1.16 3.1 3.65v4.34Z"/></svg>
+              </a>
+              <a href="https://www.instagram.com/r95ankit/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="flex size-8 items-center justify-center rounded-full text-white" style={{ background: "linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf)" }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.7" className="size-4"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37Z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+              </a>
+              <a href="mailto:asrsingh95040@gmail.com" aria-label="Email" className="flex size-8 items-center justify-center rounded-full bg-[#EA4335] text-white">
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.7" className="size-4"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              </a>
+            </div>
+          </div>
+          </div>
         </div>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Anton&display=swap');`}</style>
       </section>
-
-      {/* Footer */}
-      <footer className="relative mx-auto w-full max-w-[1280px] px-6 pb-10 sm:px-8">
-        <div className="flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 text-sm text-white/40 sm:flex-row">
-          <p className="text-sm">© 2026 Ankit Raj</p>
-          <nav aria-label="Footer" className="flex items-center gap-5">
-            <a
-              href="https://github.com/Ankit95040"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 hover:text-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/15 rounded-full px-1"
-            >
-              <Github className="size-4" />
-              GitHub
-            </a>
-            <a
-              href="https://www.linkedin.com/in/ankit-raj-128763327/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 hover:text-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/15 rounded-full px-1"
-            >
-              <Linkedin className="size-4" />
-              LinkedIn
-            </a>
-            <a
-              href="https://www.instagram.com/r95ankit/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 hover:text-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/15 rounded-full px-1"
-            >
-              <Instagram className="size-4" />
-              Instagram
-            </a>
-            <a
-              href="mailto:asrsingh95040@gmail.com"
-              className="inline-flex items-center gap-1.5 hover:text-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/15 rounded-full px-1"
-            >
-              <Mail className="size-4" />
-              Email
-            </a>
-          </nav>
-        </div>
-      </footer>
-
       <style>{`
         @media (max-width: 640px) {
           header { padding-top: 12px; }

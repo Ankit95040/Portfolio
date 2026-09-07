@@ -95,7 +95,9 @@ export default function SocialHoverStack() {
               background: BRAND_BG[social.brand],
             }}
           >
-            <span className="shrink-0" style={{ color: "#ffffff" }}>{ICONS[social.brand]}</span>
+            <span className="shrink-0" style={{ color: "#ffffff" }}>
+              {ICONS[social.brand]}
+            </span>
             <motion.span
               animate={{ opacity: isActive ? 1 : 0, width: isActive ? "auto" : 0 }}
               transition={{ duration: 0.2 }}

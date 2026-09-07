@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Amarante&family=Italianno&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Amarante&family=Italianno&family=Anton&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -181,4 +181,26 @@
   html {
     @apply font-sans;
   }
+}
+
+/* Hide scrollbar but keep scroll */
+html {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overscroll-behavior: none;
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
