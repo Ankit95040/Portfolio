@@ -53,7 +53,7 @@ import MustBeThinkingTransition from "@/components/must-thinking-transition"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { cn } from "@/lib/utils"
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 
 const SocialContainer = styled.div`
   display: flex;
@@ -914,39 +914,11 @@ const HERO_NAV_ITEMS = [
   { label: "CONTACT", href: "#contact" },
 ]
 
-// Handwritten signature entrance — reveals left-to-right once on page load,
-// like a pen signing the page. Runs a single time, then stays visible.
-function SignatureName({ reduceMotion }: { reduceMotion: boolean }) {
-  return (
-    <span className="relative inline-block">
-      <motion.span
-        aria-label="Ankit Raj"
-        className="block whitespace-nowrap"
-        style={{ fontFamily: "'Allura', 'Italianno', cursive", fontWeight: 400 }}
-        initial={reduceMotion ? false : { clipPath: "inset(-12% 100% -12% 0%)" }}
-        animate={{ clipPath: "inset(-12% 0% -12% 0%)" }}
-        transition={{ duration: 2.4, delay: 0.7, ease: [0.45, 0, 0.2, 1] }}
-      >
-        Ankit Raj
-      </motion.span>
-      {!reduceMotion && (
-        <motion.span
-          aria-hidden="true"
-          className="absolute top-[62%] size-[7px] rounded-full bg-black/85"
-          style={{ boxShadow: "0 0 8px rgba(0,0,0,0.45)" }}
-          initial={{ left: "0%", opacity: 0 }}
-          animate={{ left: "98%", opacity: [0, 1, 1, 0] }}
-          transition={{ duration: 2.4, delay: 0.7, ease: [0.45, 0, 0.2, 1] }}
-        />
-      )}
-    </span>
-  )
-}
-
 export default function HomePage() {
   const [isDark, setIsDark] = React.useState(true)
   const [navOpen, setNavOpen] = React.useState(false)
-  const reduceMotion = useReducedMotion() ?? false
+  const [homeVisible, setHomeVisible] = React.useState(true)
+  const heroRef = React.useRef<HTMLElement | null>(null)
 
   React.useEffect(() => {
     const root = document.documentElement
@@ -963,6 +935,22 @@ export default function HomePage() {
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
   }, [navOpen])
+
+  // Hamburger lives only on Home — hide it (and close the panel) once the
+  // hero scrolls out of view, show it again when returning to Home.
+  React.useEffect(() => {
+    const el = heroRef.current
+    if (!el || typeof IntersectionObserver === "undefined") return
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        setHomeVisible(entry.isIntersecting)
+        if (!entry.isIntersecting) setNavOpen(false)
+      },
+      { threshold: 0.15 }
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
 
   const goToSection = (href: string) => {
     setNavOpen(false)
@@ -1065,16 +1053,18 @@ export default function HomePage() {
 
   return (
     <main id="home" className="relative">
-      {/* Hamburger — the only visible chrome in the closed hero state */}
+      {/* Hamburger — visible only while the Home hero is in view */}
       <header className="pointer-events-none fixed left-0 top-0 z-[60] p-5 sm:p-8">
         <motion.button
           type="button"
           aria-label="Open navigation"
+          aria-hidden={!homeVisible || navOpen}
+          tabIndex={homeVisible && !navOpen ? 0 : -1}
           onClick={() => setNavOpen(true)}
           className="pointer-events-auto flex size-14 items-center justify-center rounded-full bg-black shadow-[0_10px_30px_rgba(0,0,0,0.45)]"
-          animate={{ opacity: navOpen ? 0 : 1, scale: navOpen ? 0.85 : 1 }}
+          animate={{ opacity: homeVisible && !navOpen ? 1 : 0, scale: navOpen ? 0.85 : 1 }}
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-          style={{ pointerEvents: navOpen ? "none" : "auto" }}
+          style={{ pointerEvents: homeVisible && !navOpen ? "auto" : "none" }}
         >
           <span className="flex flex-col items-center gap-[5px]" aria-hidden="true">
             <span className="block h-[3px] w-6 rounded-full bg-[#E8621A]" />
@@ -1154,7 +1144,7 @@ export default function HomePage() {
       </AnimatePresence>
 
       {/* Home hero — exact uploaded cinematic portrait as a static full-screen background */}
-      <section aria-label="Intro" className="relative min-h-[100dvh] overflow-hidden bg-[#C8500F]">
+      <section ref={heroRef} aria-label="Intro" className="relative min-h-[100dvh] overflow-hidden bg-[#C8500F]">
         {/* static background photograph — never animated, moved, or filtered */}
         <img
           src="/images/hero-bg.png"
@@ -1187,11 +1177,8 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* signature + tagline */}
-          <div className="absolute right-5 top-[44%] z-10 text-right sm:right-12 sm:top-[45%] lg:right-24">
-            <p className="text-[56px] leading-[0.95] text-black sm:text-[84px] lg:text-[96px]">
-              <SignatureName reduceMotion={reduceMotion} />
-            </p>
+          {/* tagline (the "Ankit Raj" signature is baked into the background image) */}
+          <div className="absolute right-5 top-[58%] z-10 text-right sm:right-12 lg:right-24">
             <p className="mt-4 font-mono text-[10px] leading-[1.9] tracking-[0.3em] text-black/80 sm:text-[12px]">
               FULL-STACK DEVELOPER
               <br />
