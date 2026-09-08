@@ -3,13 +3,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import * as React from "react"
-import dynamic from "next/dynamic"
 import {
-  Home,
-  User,
-  Folder,
-  Layers,
-  Mail,
   Store,
   ExternalLink,
   Send,
@@ -17,7 +11,6 @@ import {
   Workflow,
   MessageSquare,
   Container,
-  Code,
 } from "lucide-react"
 
 function Github(props: React.SVGProps<SVGSVGElement>) {
@@ -46,18 +39,14 @@ function Instagram(props: React.SVGProps<SVGSVGElement>) {
 
 import { LiquidCarveButton } from "@/components/originkit/liquid-carve-button"
 import { ArrowRevealButton } from "@/components/originkit/arrow-reveal-button"
-import { ScrambleText } from "@/components/originkit/scramble-text"
 import { CardContainer, CardBody, CardItem } from "@/components/ui/3d-card"
-import { Spotlight } from "@/components/ui/spotlight"
 import { CodeWindow } from "@/components/ui/code-window"
 import { ProjectPreviewToggle } from "@/components/ui/project-preview-toggle"
 import { PointerHighlight } from "@/components/ui/pointer-highlight"
-import { FloatingDock } from "@/components/ui/floating-dock"
 import { DraggableCardBody, DraggableCardContainer } from "@/components/ui/draggable-card"
 import { HeartFavorite } from "@/components/ui/heart-favorite"
 import { CrowdCanvas } from "@/components/ui/skiper-ui/skiper39"
 import styled from "styled-components"
-import SocialHoverStack from "@/components/ui/social-hover-stack"
 import ProjectsEditorial from "@/components/projects-editorial"
 import AboutTransition from "@/components/about-transition"
 import MustBeThinkingTransition from "@/components/must-thinking-transition"
@@ -136,31 +125,6 @@ const SocialLink = styled.a<{ $brand?: string }>`
     }
   }
 `
-
-const Hero3D = dynamic(() => import("@/components/hero-3d").then((m) => m.Hero3D), {
-  ssr: false,
-  loading: () => (
-    <div className="flex h-[360px] w-full items-center justify-center">
-      <div className="size-2 animate-pulse rounded-full bg-white/40" />
-    </div>
-  ),
-})
-
-const NAV_ITEMS = [
-  { id: "home", label: "Home", icon: <Home />, href: "/" },
-  { id: "about", label: "About", icon: <User />, href: "#about" },
-  { id: "projects", label: "Projects", icon: <Folder />, href: "#projects" },
-  { id: "skills", label: "Skills", icon: <Layers />, href: "#skills" },
-  { id: "contact", label: "Contact", icon: <Mail />, href: "#contact" },
-]
-
-const floatingDockItems = [
-  { title: "Home", icon: <Home className="h-4 w-4" />, href: "#home" },
-  { title: "About", icon: <User className="h-4 w-4" />, href: "#about" },
-  { title: "Projects", icon: <Folder className="h-4 w-4" />, href: "#projects" },
-  { title: "Skills", icon: <Code className="h-4 w-4" />, href: "#skills" },
-  { title: "Contact", icon: <Mail className="h-4 w-4" />, href: "#contact" },
-]
 
 // ─── Project Data ──────────────────────────────────────────────────────────
 // Keep project data in a clean structure for easy maintenance.
@@ -941,9 +905,48 @@ function Project3DCard({ project }: { project: Project }) {
   )
 }
 
+// ─── Home hero — orange cinematic editorial (reference composition) ────────
+
+const HERO_NAV_ITEMS = [
+  { label: "HOME", href: "#home" },
+  { label: "ABOUT", href: "#about" },
+  { label: "PROJECTS", href: "#projects" },
+  { label: "CONTACT", href: "#contact" },
+]
+
+// Handwritten signature entrance — reveals left-to-right once on page load,
+// like a pen signing the page. Runs a single time, then stays visible.
+function SignatureName({ reduceMotion }: { reduceMotion: boolean }) {
+  return (
+    <span className="relative inline-block">
+      <motion.span
+        aria-label="Ankit Raj"
+        className="block whitespace-nowrap"
+        style={{ fontFamily: "'Allura', 'Italianno', cursive", fontWeight: 400 }}
+        initial={reduceMotion ? false : { clipPath: "inset(-12% 100% -12% 0%)" }}
+        animate={{ clipPath: "inset(-12% 0% -12% 0%)" }}
+        transition={{ duration: 2.4, delay: 0.7, ease: [0.45, 0, 0.2, 1] }}
+      >
+        Ankit Raj
+      </motion.span>
+      {!reduceMotion && (
+        <motion.span
+          aria-hidden="true"
+          className="absolute top-[62%] size-[7px] rounded-full bg-black/85"
+          style={{ boxShadow: "0 0 8px rgba(0,0,0,0.45)" }}
+          initial={{ left: "0%", opacity: 0 }}
+          animate={{ left: "98%", opacity: [0, 1, 1, 0] }}
+          transition={{ duration: 2.4, delay: 0.7, ease: [0.45, 0, 0.2, 1] }}
+        />
+      )}
+    </span>
+  )
+}
+
 export default function HomePage() {
-  const [active, setActive] = React.useState(0)
   const [isDark, setIsDark] = React.useState(true)
+  const [navOpen, setNavOpen] = React.useState(false)
+  const reduceMotion = useReducedMotion() ?? false
 
   React.useEffect(() => {
     const root = document.documentElement
@@ -951,26 +954,22 @@ export default function HomePage() {
     else root.classList.remove("dark")
   }, [isDark])
 
-  // Scroll spy — update active nav as user scrolls
+  // Close the hero nav with Escape
   React.useEffect(() => {
-    const ids = NAV_ITEMS.map((item) => item.id)
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const index = ids.indexOf(entry.target.id)
-            if (index !== -1) setActive(index)
-          }
-        })
-      },
-      { rootMargin: "-50% 0px -50% 0px", threshold: 0 }
-    )
-    ids.forEach((id) => {
-      const el = document.getElementById(id)
-      if (el) observer.observe(el)
-    })
-    return () => observer.disconnect()
-  }, [])
+    if (!navOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setNavOpen(false)
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [navOpen])
+
+  const goToSection = (href: string) => {
+    setNavOpen(false)
+    window.setTimeout(() => {
+      document.querySelector(href)?.scrollIntoView({ behavior: "smooth" })
+    }, 320)
+  }
   // final LET'S BUILD SOMETHING — distributed editorial canvas, scroll-controlled collage assembly
   const finalOuterRef = React.useRef<HTMLDivElement>(null)
   const finalPinRef = React.useRef<HTMLDivElement>(null)
@@ -1031,108 +1030,213 @@ export default function HomePage() {
     }
   }, [])
 
-  // keep active used for scroll spy (FloatingDock handles own hover state)
-  void active
+  // Wheel dampening — prevents a single extreme wheel/trackpad event from
+  // jumping an enormous distance. Uses exponential compression rather than
+  // a hard cap so fast scrolling still feels fast:
+  //   ≤ 80px  → unchanged
+  //   150px   → ~138px  (8%)
+  //   300px   → ~203px  (32%)
+  //   500px   → ~236px  (53%)
+  //   1000px  → ~249px  (75%)
+  React.useEffect(() => {
+    if (typeof window === "undefined") return
+    if (window.matchMedia("(pointer: coarse)").matches) return
+
+    const SOFT_CAP = 80
+    const HARD_CAP = 250
+    const RANGE = HARD_CAP - SOFT_CAP
+
+    const handleWheel = (e: WheelEvent) => {
+      let deltaPx = e.deltaY
+      if (e.deltaMode === 1) deltaPx *= 40
+      else if (e.deltaMode === 2) deltaPx = Math.sign(deltaPx) * window.innerHeight
+
+      const abs = Math.abs(deltaPx)
+      if (abs <= SOFT_CAP) return
+
+      const dampened = HARD_CAP - RANGE * Math.exp(-(abs - SOFT_CAP) / RANGE)
+      e.preventDefault()
+      window.scrollBy(0, Math.sign(deltaPx) * dampened)
+    }
+
+    document.addEventListener("wheel", handleWheel, { passive: false })
+    return () => document.removeEventListener("wheel", handleWheel)
+  }, [])
 
   return (
     <main id="home" className="relative">
-      <header className="pointer-events-none fixed inset-x-0 top-0 z-40 flex items-center justify-center gap-3 px-4 pt-[14px] sm:pt-6">
-        <div className="pointer-events-auto">
-          <FloatingDock items={floatingDockItems} />
-        </div>
+      {/* Hamburger — the only visible chrome in the closed hero state */}
+      <header className="pointer-events-none fixed left-0 top-0 z-[60] p-5 sm:p-8">
+        <motion.button
+          type="button"
+          aria-label="Open navigation"
+          onClick={() => setNavOpen(true)}
+          className="pointer-events-auto flex size-14 items-center justify-center rounded-full bg-black shadow-[0_10px_30px_rgba(0,0,0,0.45)]"
+          animate={{ opacity: navOpen ? 0 : 1, scale: navOpen ? 0.85 : 1 }}
+          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+          style={{ pointerEvents: navOpen ? "none" : "auto" }}
+        >
+          <span className="flex flex-col items-center gap-[5px]" aria-hidden="true">
+            <span className="block h-[3px] w-6 rounded-full bg-[#E8621A]" />
+            <span className="block h-[3px] w-6 rounded-full bg-[#E8621A]" />
+            <span className="block h-[3px] w-4 self-start rounded-full bg-[#E8621A]" />
+          </span>
+        </motion.button>
       </header>
 
-      {/* Hero */}
-      <section aria-label="Hero" className="relative flex min-h-[100dvh] items-center overflow-visible">
-        <Spotlight className="-top-16 -left-16 md:-top-10 md:left-10 opacity-[0.28]" fill="white" />
-        <div className="mx-auto flex w-full max-w-[1280px] flex-col px-6 pb-10 pt-28 sm:px-8 sm:pb-12 sm:pt-28 lg:flex-row lg:items-center lg:px-8 lg:pt-8">
-          <div className="relative z-10 flex w-full max-w-[720px] flex-col gap-6 sm:gap-7">
-            <p className="text-[10px] font-medium tracking-[0.28em] text-white/55 sm:text-[11px] sm:tracking-[0.32em]">
-              FULL-STACK DEVELOPER • BUILDER • PROBLEM SOLVER
-            </p>
-
-            <div className="space-y-1 sm:space-y-2">
-              <p className="font-serif text-[15px] leading-none tracking-[-0.01em] text-white/70 sm:text-[17px]">
-                Hi, I&apos;m
-              </p>
-              <h1
-                className="text-[62px] leading-[0.82] tracking-[-0.02em] text-white sm:text-[84px] lg:text-[110px]"
-                style={{ fontFamily: "'Italianno', cursive", fontWeight: 400 }}
-              >
-                <ScrambleText text="Ankit Raj" />
-              </h1>
-              <p className="pt-2 font-serif text-[19px] leading-[1.3] tracking-[-0.015em] text-white/85 sm:pt-3 sm:text-[24px] lg:text-[26px]">
-                I build software that feels alive.
-              </p>
-            </div>
-
-            <p className="max-w-[560px] text-[15px] leading-7 text-white/60 sm:text-[16px] sm:leading-7">
-              Full-stack developer focused on Java, Spring Boot, React, Next.js and modern
-              AI-powered applications.
-            </p>
-
-            <div className="mt-2 flex flex-col gap-3">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-                <button
-                  onClick={() => {
-                    document.querySelector("#projects")?.scrollIntoView({ behavior: "smooth" })
-                  }}
-                  className="inline-flex h-11 items-center justify-center rounded-lg border border-white/10 bg-white px-7 text-sm font-semibold text-black shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-colors duration-200 hover:bg-[#f97316] hover:text-white hover:border-[#f97316] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 w-full sm:w-auto"
-                  aria-label="View My Work"
-                >
-                  View My Work
-                </button>
-                <button
-                  onClick={() => document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" })}
-                  className="inline-flex h-11 items-center justify-center rounded-lg border border-white/10 bg-white px-7 text-sm font-semibold text-black shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-colors duration-200 hover:bg-[#f97316] hover:text-white hover:border-[#f97316] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 w-full sm:w-auto"
-                  aria-label="Let's Connect"
-                >
-                  Let&apos;s Connect
-                </button>
-              </div>
-            </div>
-
-            <div className="mt-3">
-              <SocialHoverStack />
-            </div>
-
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-white/35">
-              <span className="inline-flex items-center gap-2">
-                <span className="size-1.5 rounded-full bg-emerald-400/90 shadow-[0_0_10px_rgba(52,211,153,0.55)]" aria-hidden />
-                Available for new opportunities
-              </span>
-              <span className="text-white/20">•</span>
-              <span className="tracking-wide">India — Remote</span>
-            </div>
-
-            <div className="relative mt-2 w-full lg:hidden">
-              <div className="pointer-events-none absolute inset-0 -z-10 rounded-[24px] bg-gradient-to-b from-white/[0.03] to-transparent blur-xl" />
-              <React.Suspense
-                fallback={
-                  <div className="flex h-[280px] items-center justify-center">
-                    <div className="size-2 animate-pulse rounded-full bg-white/30" />
-                  </div>
-                }
-              >
-                <Hero3D />
-              </React.Suspense>
-            </div>
-          </div>
-
-          <div aria-hidden="true" className="relative hidden w-full flex-1 items-center justify-center lg:flex lg:pl-10">
-            <React.Suspense
-              fallback={
-                <div className="flex size-[420px] items-center justify-center">
-                  <div className="size-2 animate-pulse rounded-full bg-white/30" />
-                </div>
-              }
+      {/* Left slide-in navigation — translucent, hero stays visible through it */}
+      <AnimatePresence>
+        {navOpen && (
+          <motion.div
+            key="hero-nav-scrim"
+            aria-hidden="true"
+            className="fixed inset-0 z-[55]"
+            style={{ background: "transparent" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+            onClick={() => setNavOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {navOpen && (
+          <motion.aside
+            key="hero-nav"
+            aria-label="Primary navigation"
+            className="fixed bottom-0 left-0 top-0 z-[58] flex w-[min(400px,84vw)] flex-col border-r border-white/10 bg-black/45 p-6 pt-5 backdrop-blur-[3px] sm:p-10 sm:pt-8"
+            initial={{ x: "-102%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "-102%" }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <button
+              type="button"
+              aria-label="Close navigation"
+              onClick={() => setNavOpen(false)}
+              className="flex size-14 items-center justify-center rounded-full bg-black shadow-[0_10px_30px_rgba(0,0,0,0.45)]"
             >
-              <Hero3D className="w-[420px]" />
-            </React.Suspense>
-          </div>
-        </div>
+              <span className="relative block size-6" aria-hidden="true">
+                <span className="absolute left-0 top-1/2 block h-[3px] w-6 -translate-y-1/2 rotate-45 rounded-full bg-[#E8621A]" />
+                <span className="absolute left-0 top-1/2 block h-[3px] w-6 -translate-y-1/2 -rotate-45 rounded-full bg-[#E8621A]" />
+              </span>
+            </button>
+            <nav className="mt-14 flex flex-col gap-1 sm:mt-20">
+              {HERO_NAV_ITEMS.map((item) => {
+                const isActive = item.label === "HOME"
+                return (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={() => goToSection(item.href)}
+                    className="group flex items-center gap-4 py-2 text-left"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`block h-9 w-1.5 rounded-full transition-colors ${isActive ? "bg-[#E8621A]" : "bg-transparent group-hover:bg-white/25"}`}
+                    />
+                    <span
+                      className={`block leading-none tracking-[0.01em] transition-colors ${isActive ? "text-white" : "text-white/55 group-hover:text-white"}`}
+                      style={{ fontFamily: "'Anton', Impact, sans-serif", fontSize: "clamp(38px, 6vw, 56px)" }}
+                    >
+                      {item.label}
+                    </span>
+                  </button>
+                )
+              })}
+            </nav>
+            <p className="mt-auto font-mono text-[10px] tracking-[0.3em] text-white/40">
+              ANKIT RAJ — PORTFOLIO
+            </p>
+          </motion.aside>
+        )}
+      </AnimatePresence>
 
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" aria-hidden />
+      {/* Home hero — exact uploaded cinematic portrait as a static full-screen background */}
+      <section aria-label="Intro" className="relative min-h-[100dvh] overflow-hidden bg-[#C8500F]">
+        {/* static background photograph — never animated, moved, or filtered */}
+        <img
+          src="/images/hero-bg.png"
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+          fetchPriority="high"
+          className="pointer-events-none absolute inset-0 h-full w-full select-none object-cover"
+        />
+
+        {/* shifting UI layer — moves right together when the nav opens;
+            the background photograph above stays completely static */}
+        <motion.div
+          className="relative flex min-h-[100dvh] flex-col"
+          initial={false}
+          animate={{ x: navOpen ? 120 : 0 }}
+          transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {/* left editorial words */}
+          <div className="absolute left-6 top-[30%] z-10 sm:left-12 sm:top-[32%]">
+            <span className="block h-[3px] w-12 bg-white/90" aria-hidden="true" />
+            <p className="mt-6 font-mono text-[12px] leading-[2.1] tracking-[0.34em] text-white/90 sm:text-[14px]">
+              SIMPLE
+              <br />
+              IDEAS
+              <br />
+              BIGGER
+              <br />
+              IMPACT
+            </p>
+          </div>
+
+          {/* signature + tagline */}
+          <div className="absolute right-5 top-[44%] z-10 text-right sm:right-12 sm:top-[45%] lg:right-24">
+            <p className="text-[56px] leading-[0.95] text-black sm:text-[84px] lg:text-[96px]">
+              <SignatureName reduceMotion={reduceMotion} />
+            </p>
+            <p className="mt-4 font-mono text-[10px] leading-[1.9] tracking-[0.3em] text-black/80 sm:text-[12px]">
+              FULL-STACK DEVELOPER
+              <br />
+              &amp; PROBLEM SOLVER
+            </p>
+          </div>
+
+          {/* socials bottom-left */}
+          <div className="absolute bottom-7 left-6 z-10 flex items-center gap-5 sm:bottom-9 sm:left-12">
+            <a href="https://www.linkedin.com/in/ankit-raj-128763327/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="text-white transition-opacity hover:opacity-70">
+              <Linkedin className="size-5" />
+            </a>
+            <a href="https://www.instagram.com/r95ankit/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="text-white transition-opacity hover:opacity-70">
+              <Instagram className="size-5" />
+            </a>
+            <a href="https://github.com/Ankit95040" target="_blank" rel="noopener noreferrer" aria-label="GitHub" className="text-white transition-opacity hover:opacity-70">
+              <Github className="size-5" />
+            </a>
+            <a href="mailto:asrsingh95040@gmail.com" aria-label="Email" className="text-white transition-opacity hover:opacity-70">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="size-5" aria-hidden="true">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                <polyline points="22,6 12,13 2,6" />
+              </svg>
+            </a>
+          </div>
+
+          {/* scroll indicator bottom-right */}
+          <button
+            type="button"
+            onClick={() => document.querySelector("#about")?.scrollIntoView({ behavior: "smooth" })}
+            className="absolute bottom-7 right-6 z-10 flex items-center gap-3 sm:bottom-9 sm:right-12"
+            aria-label="Scroll to explore"
+          >
+            <span className="flex size-12 items-center justify-center rounded-full border-2 border-black/80 sm:size-14" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth={2} className="size-5" aria-hidden="true">
+                <path d="M12 4v16m0 0l-6-6m6 6l6-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+            <span className="text-left font-mono text-[10px] leading-[1.7] tracking-[0.28em] text-black/80 sm:text-[11px]">
+              SCROLL
+              <br />
+              TO EXPLORE
+            </span>
+          </button>
+        </motion.div>
       </section>
 
       {/* Must be thinking — editorial transition before Projects */}
@@ -1142,7 +1246,9 @@ export default function HomePage() {
       <ProjectsEditorial />
 
       {/* Black transition + About editorial slide */}
-      <AboutTransition />
+      <div id="about">
+        <AboutTransition />
+      </div>
 
       {/* Final LET'S BUILD SOMETHING — editorial collage */}
       <section
@@ -1152,7 +1258,7 @@ export default function HomePage() {
         className="relative w-full bg-[#F2F0EB] selection:bg-black selection:text-white"
         style={{ height: "300vh" }}
       >
-        <div ref={finalPinRef} className="relative h-screen w-screen">
+        <div ref={finalPinRef} className="relative h-screen w-screen overflow-hidden">
           <div className="pointer-events-none absolute inset-0 opacity-[0.025]" aria-hidden="true" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
 
           <div className="relative flex h-full w-full flex-col px-4 py-3 sm:px-6 sm:py-4 lg:px-8 lg:py-5">

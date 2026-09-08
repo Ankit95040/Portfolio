@@ -477,7 +477,7 @@ function ProjectLayer({
                 </span>
               ))}
             </div>
-            <div className="mt-auto flex flex-wrap gap-3 pt-6">
+            <div className="mt-auto flex flex-wrap gap-3 pt-6 relative -top-6">
               <a
                 href={project.liveUrl}
                 target="_blank"

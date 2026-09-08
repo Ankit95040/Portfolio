@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Amarante&family=Italianno&family=Anton&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Amarante&family=Italianno&family=Anton&family=Allura&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -188,6 +188,10 @@ html {
   scrollbar-width: none;
   -ms-overflow-style: none;
   overscroll-behavior: none;
+  overflow-x: clip;
+}
+body {
+  overflow-x: clip;
 }
 html::-webkit-scrollbar,
 body::-webkit-scrollbar {

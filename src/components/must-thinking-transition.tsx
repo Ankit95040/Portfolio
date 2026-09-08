@@ -176,7 +176,7 @@ export default function MustBeThinkingTransition() {
   }, [])
 
   return (
-    <div ref={outerRef} className="relative" style={{ height: "140vh" }}>
+    <div ref={outerRef} className="relative bg-black" style={{ height: "140vh" }}>
       <div ref={pinRef} className="sticky top-0 flex h-[100vh] min-h-[100vh] w-screen items-center overflow-hidden bg-black will-change-transform">
         <div className="mx-auto grid w-full max-w-[1280px] gap-8 px-5 py-8 sm:px-8 lg:grid-cols-[1.08fr_0.92fr] lg:gap-10 lg:px-8">
           {/* left text */}
