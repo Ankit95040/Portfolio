@@ -378,6 +378,8 @@ type ProjectDef = {
   githubUrl?: string
   variant: "warm" | "crimson" | "navy"
   preview: React.ReactNode
+  codeFile: string
+  codeLines: string[]
 }
 
 const PROJECTS: ProjectDef[] = [
@@ -392,6 +394,23 @@ const PROJECTS: ProjectDef[] = [
     githubUrl: "https://github.com/Ankit95040/ShopM",
     variant: "warm",
     preview: <ShopMPreview />,
+    codeFile: "schema.prisma + billing.ts",
+    codeLines: [
+      "// schema.prisma — multi-tenant shop",
+      "model Shop {",
+      "  id       String  @id @default(cuid())",
+      "  name     String",
+      "  owners   Owner[]",
+      "  invoices Invoice[]",
+      "  stock    StockItem[]",
+      "}",
+      "",
+      "// billing today — Next.js server action",
+      "const total = await db.invoice.aggregate({",
+      "  where: { shopId, date: today() },",
+      "  _sum: { amount: true },",
+      "});",
+    ],
   },
   {
     number: "02",
@@ -404,6 +423,21 @@ const PROJECTS: ProjectDef[] = [
     githubUrl: "https://github.com/Ankit95040",
     variant: "crimson",
     preview: <PromptPreview />,
+    codeFile: "generate.ts — tRPC + E2B",
+    codeLines: [
+      "// tRPC — prompt to live app",
+      "const app = await trpc.generate.mutate({",
+      '  prompt: "task manager with auth",',
+      "});",
+      "",
+      "// isolated E2B sandbox per run",
+      "const sandbox = await E2B.create({",
+      '  template: "nextjs",',
+      "  timeout: 300,",
+      "});",
+      "await sandbox.deploy(generatedFiles);",
+      "return { url: sandbox.url }; // LIVE",
+    ],
   },
   {
     number: "03",
@@ -416,8 +450,47 @@ const PROJECTS: ProjectDef[] = [
     githubUrl: "https://github.com/Ankit95040",
     variant: "navy",
     preview: <ChatPreview />,
+    codeFile: "chat.ts — Gemini stream",
+    codeLines: [
+      "// Gemini streaming (React + Vite)",
+      'const res = await fetch("/api/chat", {',
+      '  method: "POST",',
+      "  body: JSON.stringify({ history }),",
+      "});",
+      "const reader = res.body.getReader();",
+      "while (true) {",
+      "  const { done, value } = await reader.read();",
+      "  if (done) break;",
+      "  append(stream.decode(value)); // live",
+      "}",
+    ],
   },
 ]
+
+// ─── Code view — static, never scrollable, fits the preview area ──
+
+function ProjectCodeView({ file, lines }: { file: string; lines: string[] }) {
+  return (
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[#0C0A0A]">
+      <div className="flex shrink-0 items-center gap-2 border-b border-white/10 px-4 py-2">
+        <span className="truncate font-mono text-[10px] tracking-wide text-white/45">{file}</span>
+        <span className="ml-auto shrink-0 rounded-full border border-white/10 px-2 py-0.5 font-mono text-[9px] tracking-widest text-white/40">
+          READ-ONLY
+        </span>
+      </div>
+      <pre className="m-0 min-h-0 flex-1 overflow-hidden p-4 font-mono text-[10.5px] leading-[1.6] text-white/85">
+        {lines.map((line, i) => (
+          <div key={i} className="flex gap-3 whitespace-pre">
+            <span className="w-5 shrink-0 select-none text-right text-white/25">{i + 1}</span>
+            <span className={line.trimStart().startsWith("//") ? "italic text-white/35" : undefined}>
+              {line || " "}
+            </span>
+          </div>
+        ))}
+      </pre>
+    </div>
+  )
+}
 
 // ─── Single project layer — full-screen, continuous progress ──
 
@@ -430,6 +503,7 @@ function ProjectLayer({
 }) {
   const isWarm = project.variant === "warm"
   const isCrimson = project.variant === "crimson"
+  const [view, setView] = React.useState<"preview" | "code">("preview")
 
   const sectionBg = isWarm ? "bg-[#FAF7F3]" : isCrimson ? "bg-[#7A0C15]" : "bg-[#0A1020]"
   const textC = isWarm ? "text-[#0F1115]" : "text-white"
@@ -509,6 +583,47 @@ function ProjectLayer({
               transform: `translateY(${(1 - progress) * 16}px) scale(${0.98 + progress * 0.02})`,
             }}
           >
+            {/* preview / code toggle */}
+            <div className="mb-2 flex items-center justify-end">
+              <div
+                className={`inline-flex rounded-full border p-1 ${isWarm ? "border-[#D9D2C9] bg-white" : "border-white/15 bg-white/5"}`}
+                role="group"
+                aria-label="Project view"
+              >
+                <button
+                  type="button"
+                  onClick={() => setView("preview")}
+                  aria-pressed={view === "preview"}
+                  className={`rounded-full px-3 py-1 text-[10px] font-bold tracking-[0.12em] transition ${
+                    view === "preview"
+                      ? isWarm
+                        ? "bg-[#0F1115] text-white"
+                        : "bg-white text-[#0F1115]"
+                      : isWarm
+                        ? "text-[#4A4D52] hover:text-[#0F1115]"
+                        : "text-white/55 hover:text-white"
+                  }`}
+                >
+                  PROJECT PREVIEW
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setView("code")}
+                  aria-pressed={view === "code"}
+                  className={`rounded-full px-3 py-1 text-[10px] font-bold tracking-[0.12em] transition ${
+                    view === "code"
+                      ? isWarm
+                        ? "bg-[#0F1115] text-white"
+                        : "bg-white text-[#0F1115]"
+                      : isWarm
+                        ? "text-[#4A4D52] hover:text-[#0F1115]"
+                        : "text-white/55 hover:text-white"
+                  }`}
+                >
+                  VIEW CODE
+                </button>
+              </div>
+            </div>
             <div
               className={`flex h-[400px] w-full flex-col overflow-hidden rounded-[18px] border bg-white shadow-[0_24px_64px_-24px_rgba(0,0,0,0.22),0_4px_16px_-8px_rgba(0,0,0,0.08)] sm:h-[440px] lg:h-[480px] ${browserBorder}`}
             >
@@ -517,7 +632,7 @@ function ProjectLayer({
                 <span className="size-3 rounded-full bg-[#FFBD2E]" aria-hidden="true" />
                 <span className="size-3 rounded-full bg-[#27C93F]" aria-hidden="true" />
               </div>
-              <div className="min-h-0 flex-1 overflow-auto">{project.preview}</div>
+              <div className="min-h-0 flex-1 overflow-clip">{view === "preview" ? project.preview : <ProjectCodeView file={project.codeFile} lines={project.codeLines} />}</div>
             </div>
             <div className="mt-4 flex w-full items-center justify-end gap-3">
               <span className={`whitespace-nowrap text-[11px] font-bold tracking-[0.14em] ${creditC}`}>BUILT BY ANKIT RAJ</span>

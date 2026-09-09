@@ -952,6 +952,27 @@ export default function HomePage() {
     return () => obs.disconnect()
   }, [])
 
+  // One-shot navbar teaser: when the intro lands on Home, open with the
+  // existing animation, dwell fully open for exactly 1s, then collapse with
+  // the existing animation. Never replays on scroll.
+  React.useEffect(() => {
+    const timers: number[] = []
+    const onLanded = () => {
+      setNavOpen(true)
+      // 650ms lets the 0.6s open animation settle fully before the dwell.
+      timers.push(
+        window.setTimeout(() => {
+          timers.push(window.setTimeout(() => setNavOpen(false), 1000))
+        }, 650)
+      )
+    }
+    window.addEventListener("intro:home-landed", onLanded, { once: true })
+    return () => {
+      window.removeEventListener("intro:home-landed", onLanded)
+      timers.forEach((t) => window.clearTimeout(t))
+    }
+  }, [])
+
   const goToSection = (href: string) => {
     setNavOpen(false)
     window.setTimeout(() => {
@@ -1004,7 +1025,6 @@ export default function HomePage() {
       // 91–95% sticky notes, globe, doodles
       tl.to(q("[data-animate='note']"), { autoAlpha: 1, y: 0, x: 0, rotation: 0, duration: 0.04, stagger: 0.01 }, 0.91)
       tl.to(q("[data-animate='globe']"), { autoAlpha: 1, y: 0, x: 0, scale: 1, rotation: 0, duration: 0.04 }, 0.91)
-      tl.to(q("[data-animate='deco']"), { autoAlpha: 1, y: 0, x: 0, rotation: 0, duration: 0.04, stagger: 0.01 }, 0.91)
       // 95–100% supporting text + social icons
       tl.to(q("[data-animate='text']"), { autoAlpha: 1, y: 0, x: 0, duration: 0.05, stagger: 0.01 }, 0.95)
       tl.to(q("[data-animate='social']"), { autoAlpha: 1, y: 0, x: 0, rotation: 0, scale: 1, duration: 0.05, stagger: 0.01 }, 0.95)
